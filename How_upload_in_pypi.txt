@@ -1,0 +1,41 @@
+How upload in pypi
+===================
+
+Publishing DocSafe to PyPI is a manual step you run yourself (not something Claude
+runs for you) — once a version number is uploaded, it can never be reused, even if
+deleted. Here's what's needed:
+
+1. A PyPI account
+   Sign up at https://pypi.org/account/register/ if you don't have one.
+   Optional but recommended for a first release: also sign up at
+   https://test.pypi.org/account/register/ to try TestPyPI first.
+
+2. An API token (not a username/password)
+   PyPI dropped password-based uploads. Generate a token under:
+   Account Settings -> API tokens.
+   - For the very first upload of a new project, use an account-wide token
+     (the project doesn't exist on PyPI yet, so a project-scoped token can't
+     be created until after the first upload).
+   - After the first upload, you can create a token scoped to just the
+     "DocSafe" project and use that going forward instead.
+
+3. Build the package (from the DocSafe_package/ directory)
+       uv build
+   This produces dist/*.whl and dist/*.tar.gz.
+
+4. Publish
+
+   Test upload first (recommended):
+       uv publish --index testpypi --token pypi-YOUR_TEST_TOKEN_HERE
+
+   Real upload:
+       uv publish --token pypi-YOUR_TOKEN_HERE
+
+   (twine upload dist/* works the same way if you prefer twine over uv.)
+
+Notes
+-----
+- Never share the API token or commit it to the repo.
+- Bump the version in pyproject.toml before each new upload — PyPI rejects
+  re-uploading an existing version number.
+- Both "DocSafe" and "docsafe" were unclaimed on PyPI as of the last check.

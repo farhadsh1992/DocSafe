@@ -1,0 +1,86 @@
+# ===================================================================
+# DocSafe Python dependencies
+# Managed with uv (https://docs.astral.sh/uv/)
+#
+# This list was rebuilt from:
+#   - environment2.yml (the original conda spec)
+#   - a static scan of every `import` / `from ... import` statement in
+#     DocSafe/, FarhadCV/, train_main.py and test_main.py
+# ===================================================================
+
+# ---- Core numerical / scientific stack ----
+numpy>=1.25
+scipy
+pandas
+matplotlib
+
+# ---- Deep learning ----
+torch>=2.0.1
+torchvision>=0.15.2
+tensorflow==2.18
+keras==3.5
+kornia
+torcheval
+
+# ---- Computer vision / image processing ----
+opencv-python
+pillow
+PyWavelets
+scikit-image
+scikit-learn
+
+# ---- Watermark / error-correction coding (FarhadCV/ErrorBinaryCode.py) ----
+bchlib
+reedsolo
+
+# ---- Utilities ----
+requests
+pendulum
+psutil
+
+# ---- Optional extras (uncomment only if you need them) ----
+# dlib          # only needed for Face_Detection_Utilies.api.PRN(is_dlib=True); requires cmake + a C++ toolchain
+# torchgeometry # legacy, unmaintained since 2019 - kornia (already listed above) replaces its functionality
+# imgaug        # was declared in environment2.yml but is not imported anywhere in the current code, and its
+#               # last release (0.4.0, 2020) crashes on import under numpy>=2.0 (`np.sctypes` was removed) -
+#               # only add this back together with `numpy<2` if you actually need it
+# myTransforms  # was listed in the old requirement.txt but is NOT a real published PyPI package;
+#               # it looks like a private/local module - vendor its source and `uv pip install -e <path>`
+#               # if you actually need it, otherwise it can be ignored
+
+# ===================================================================
+# How to create and use the "DocSafe1" environment with uv
+# ===================================================================
+#
+# 1) Install uv (once per machine), if not already installed:
+#      curl -LsSf https://astral.sh/uv/install.sh | sh
+#
+# 2) Create a virtual environment named "DocSafe1" (Python 3.9, matching
+#    the python_version pinned in the original environment2.yml):
+#      uv venv DocSafe1 --python 3.9
+#
+# 3) Activate it:
+#      source DocSafe1/bin/activate         # bash/zsh
+#      source DocSafe1/bin/activate.fish    # fish shell
+#
+# 4) Install every dependency listed in this file:
+#      uv pip install -r requirement.txt
+#
+#    GPU note: step 4 installs the default PyPI "torch" wheel.
+#      - For a specific CUDA build (Linux/Windows), install torch first, e.g.:
+#          uv pip install torch --index-url https://download.pytorch.org/whl/cu121
+#        then re-run step 4 (uv will skip torch since it's already satisfied).
+#      - For CPU-only:
+#          uv pip install torch --index-url https://download.pytorch.org/whl/cpu
+#
+# 5) System-level packages (install via your OS package manager, NOT pip/uv)
+#    needed by opencv-python / building native extensions, e.g. on Debian/Ubuntu:
+#      sudo apt-get install -y libgl1-mesa-glx libglib2.0-0 ninja-build
+#
+# 6) Run the project:
+#      python train_main.py
+#      python test_main.py
+#
+# 7) Remove the environment when no longer needed:
+#      rm -rf DocSafe1
+# ===================================================================

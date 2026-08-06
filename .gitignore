@@ -1,0 +1,20 @@
+# Virtual environment
+DocSafe1/
+.venv/
+venv/
+
+# Pretrained weights (not distributed via git/PyPI; contact author, see README)
+pre_trained_models/
+
+# Python build artifacts
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# OS
+.DS_Store

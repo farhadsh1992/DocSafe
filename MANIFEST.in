@@ -1,0 +1,11 @@
+prune DocSafe1
+prune dist
+prune build
+prune pre_trained_models
+prune pattern
+prune assets
+prune test_images
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude .ipynb_checkpoints
+global-exclude *-checkpoint.py

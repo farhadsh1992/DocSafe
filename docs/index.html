@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DocSafe: Toward Practical Print-Proof Image Steganography</title>
+<meta name="description" content="DocSafe embeds up to 256-bit messages into images with region-aware spatial masks, using frequency decomposition and covariance-aligned losses for state-of-the-art print-proof robustness.">
+<meta property="og:title" content="DocSafe: Toward Practical Print-Proof Image Steganography via Frequency Decomposition and Covariance Alignment">
+<meta property="og:description" content="Region-aware, print-proof image steganography. IEEE Access, 2026.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="assets/img/fig6_pipeline.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<script>
+  (function () {
+    var saved = localStorage.getItem('docsafe-theme');
+    if (saved === 'light' || saved === 'dark') {
+      document.documentElement.setAttribute('data-theme', saved);
+    }
+  })();
+</script>
+
+<style>
+  :root {
+    --bg: #FAFCFF;
+    --bg-alt: #EEF3FA;
+    --text: #1b1e23;
+    --text-muted: #5b6270;
+    --accent: #E00710;
+    --accent2: #004615;
+    --accent-ink: #ffffff;
+    --border: #E1E7F0;
+    --card: #ffffff;
+    --code-bg: #1b1e23;
+    --code-text: #e7eaf0;
+    --shadow: 0 1px 3px rgba(20, 24, 33, 0.08), 0 1px 2px rgba(20, 24, 33, 0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14161a;
+      --bg-alt: #1b1e24;
+      --text: #eceef1;
+      --text-muted: #a3aab5;
+      --accent: #ff5c63;
+      --accent2: #4caf6e;
+      --accent-ink: #14161a;
+      --border: #2a2e36;
+      --card: #1b1e24;
+      --code-bg: #0e1014;
+      --code-text: #dde1e8;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161a;
+    --bg-alt: #1b1e24;
+    --text: #eceef1;
+    --text-muted: #a3aab5;
+    --accent: #ff5c63;
+    --accent2: #4caf6e;
+    --accent-ink: #14161a;
+    --border: #2a2e36;
+    --card: #1b1e24;
+    --code-bg: #0e1014;
+    --code-text: #dde1e8;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.6;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .container { max-width: 940px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---- Header / hero ---- */
+  header.hero {
+    background: var(--bg-alt);
+    border-bottom: 1px solid var(--border);
+    padding: 56px 0 40px;
+    text-align: center;
+  }
+  .logo-wrap {
+    width: 128px; height: 128px; margin: 0 auto 16px;
+    border-radius: 24px; overflow: hidden;
+    box-shadow: var(--shadow);
+    background: #fff;
+  }
+  .logo-wrap img { width: 100%; height: 100%; display: block; object-fit: cover; }
+
+  .venue-badge {
+    display: inline-block;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    border-radius: 999px;
+    padding: 5px 14px;
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
+  h1.title {
+    font-size: 1.9rem;
+    line-height: 1.32;
+    margin: 0 0 22px;
+    font-weight: 700;
+    max-width: 780px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .authors { font-size: 1.02rem; margin: 0 0 6px; }
+  .authors a { color: var(--text); font-weight: 600; }
+  .authors a:hover { color: var(--accent); }
+  .authors sup { color: var(--accent); font-weight: 700; }
+  .affiliations { font-size: 0.9rem; color: var(--text-muted); margin: 0 0 30px; }
+  .affiliations sup { color: var(--accent); font-weight: 700; margin-right: 2px; }
+
+  .btn-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 0.92rem;
+    border: 1px solid var(--border); background: var(--card); color: var(--text);
+    box-shadow: var(--shadow); transition: transform 0.12s ease, border-color 0.12s ease;
+  }
+  .btn:hover { transform: translateY(-1px); border-color: var(--accent); text-decoration: none; }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn.secondary { background: var(--accent2); color: #ffffff; border-color: var(--accent2); }
+
+  /* ---- Sticky nav ---- */
+  nav.pagenav {
+    position: sticky; top: 0; z-index: 10;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  nav.pagenav .container { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 0; padding-bottom: 0; }
+  .nav-links { display: flex; gap: 4px; overflow-x: auto; }
+  nav.pagenav a { padding: 14px 14px; font-size: 0.9rem; font-weight: 600; color: var(--text-muted); white-space: nowrap; border-bottom: 2px solid transparent; }
+  nav.pagenav a:hover { color: var(--accent); text-decoration: none; border-bottom-color: var(--accent); }
+  nav.pagenav a.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .theme-toggle {
+    flex: 0 0 auto; width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; border: 1px solid var(--border);
+    background: var(--card); color: var(--text);
+    font-size: 1rem; line-height: 1; cursor: pointer;
+  }
+  .theme-toggle:hover { border-color: var(--accent); }
+
+  /* ---- Sections ---- */
+  main section { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  main section:last-of-type { border-bottom: none; }
+  h2.section-title { font-size: 1.5rem; margin: 0 0 22px; font-weight: 700; }
+  h3.sub-title { font-size: 1.12rem; margin: 30px 0 10px; font-weight: 700; }
+  p { color: var(--text); }
+  .lede { font-size: 1.05rem; color: var(--text-muted); }
+
+  figure { margin: 0; }
+  figure img { width: 100%; display: block; border-radius: 10px; border: 1px solid var(--border); background: #fff; }
+  figcaption { font-size: 0.86rem; color: var(--text-muted); margin-top: 10px; line-height: 1.5; }
+  figcaption b { color: var(--text); }
+
+  .teaser { margin-bottom: 18px; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 8px; }
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px 14px; text-align: center; box-shadow: var(--shadow); }
+  .stat-card .num { font-size: 1.4rem; font-weight: 800; color: var(--accent); display: block; }
+  .stat-card .label { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; display: block; }
+
+  .fig-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: var(--shadow); }
+  ol.contrib li, ul.bullets li { margin-bottom: 10px; }
+
+  table.results { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 14px 0 6px; }
+  table.results caption { text-align: left; font-size: 0.86rem; color: var(--text-muted); margin-bottom: 10px; caption-side: top; }
+  table.results th, table.results td { border: 1px solid var(--border); padding: 6px 8px; text-align: center; }
+  table.results th { background: var(--bg-alt); font-weight: 700; }
+  table.results td:first-child, table.results th:first-child { text-align: left; font-weight: 600; }
+  table.results tr.highlight td { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+  .table-scroll { overflow-x: auto; }
+
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  pre {
+    background: var(--code-bg); color: var(--code-text);
+    padding: 18px 20px; border-radius: 10px; overflow-x: auto;
+    font-size: 0.86rem; line-height: 1.6; position: relative;
+  }
+  .code-block { position: relative; margin: 14px 0; }
+  .copy-btn {
+    position: absolute; top: 10px; right: 10px; font-size: 0.75rem;
+    padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.08); color: var(--code-text); cursor: pointer;
+  }
+  .copy-btn:hover { background: rgba(255,255,255,0.18); }
+
+  footer { padding: 36px 0 60px; text-align: center; color: var(--text-muted); font-size: 0.85rem; }
+
+  @media (max-width: 700px) {
+    header.hero { padding: 40px 0 30px; }
+    h1.title { font-size: 1.35rem; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .fig-row { grid-template-columns: 1fr; }
+    main section { padding: 40px 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="container">
+    <div class="logo-wrap"><img src="assets/img/logo.png" alt="DocSafe logo"></div>
+
+    <span class="venue-badge">IEEE Access &middot; 2026</span>
+    <h1 class="title">DocSafe: Toward Practical Print-Proof Image Steganography via Frequency Decomposition and Covariance Alignment</h1>
+
+    <p class="authors">
+      <a href="mailto:farhad.shadmand@isr.uc.pt">Farhad Shadmand</a><sup>1</sup> &nbsp;
+      <a href="mailto:iurii.medvedev@isr.uc.pt">Iurii Medvedev</a><sup>1</sup> &nbsp;
+      Luiz Schirmer<sup>2</sup> &nbsp;
+      <a href="mailto:nunogon@deec.uc.pt">Nuno Gon&ccedil;alves</a><sup>1</sup>
+    </p>
+    <p class="affiliations">
+      <sup>1</sup>Institute of Systems and Robotics, University of Coimbra, Portugal &nbsp;&bull;&nbsp;
+      <sup>2</sup>Col&eacute;gio T&eacute;cnico Industrial, Universidade Federal de Santa Maria, Brazil
+    </p>
+
+    <div class="btn-row">
+      <a class="btn primary" href="assets/pdf/DocSafe_IEEEAccess2026.pdf">&#128196; Paper (PDF)</a>
+      <a class="btn" href="https://doi.org/10.1109/ACCESS.2026.3680290">IEEE Access &middot; DOI</a>
+      <a class="btn secondary" href="https://github.com/farhadsh1992/DocSafe">&#9733; Code (GitHub)</a>
+      <a class="btn" href="#bibtex">&#10086; BibTeX</a>
+    </div>
+  </div>
+</header>
+
+<nav class="pagenav">
+  <div class="container">
+    <div class="nav-links">
+      <a href="#abstract">Abstract</a>
+      <a href="#foundations">Foundations</a>
+      <a href="#method">Method</a>
+      <a href="#results">Results</a>
+      <a href="#code">Code</a>
+      <a href="#bibtex">BibTeX</a>
+    </div>
+    <button id="theme-toggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Switch between light and dark theme">&#127769;</button>
+  </div>
+</nav>
+
+<main>
+
+  <section id="abstract">
+    <div class="container">
+      <figure class="teaser">
+        <img src="assets/img/fig6_pipeline.png" alt="DocSafe end-to-end pipeline: encoding a message into an image, printing it, and decoding it back from a smartphone photo">
+        <figcaption><b>Figure 1.</b> The full DocSafe pipeline: an image, a mask, and a message are encoded into a stamp-like residual; the printed result is captured by a phone and decoded back to the original message.</figcaption>
+      </figure>
+
+      <h2 class="section-title" style="margin-top:40px;">Abstract</h2>
+      <p>
+        Data-hiding techniques such as robust steganography and invisible watermarking matter for aesthetic
+        stamps, copyright protection, privacy-preserving communication, and content provenance. Existing
+        print-proof steganography methods, however, often struggle to embed messages in small image regions or
+        to decode them from very low-resolution printed outputs.
+      </p>
+      <p>
+        We introduce <b>DocSafe</b>, a framework that embeds binary messages of up to 256 bits into images
+        while producing stamp-like outputs robust to both digital and physical distortions. The method enables
+        region-aware embedding via spatial masks, analyzes how wavelet sub-band frequencies affect robustness,
+        and evaluates covariance-based losses &mdash; identifying Stein divergence for the encoder and the
+        Affine-Invariant Riemannian Metric (AIRM) for the decoder as the most effective configuration. A
+        lightweight decoder architecture further improves both imperceptibility and decoding accuracy.
+      </p>
+      <p>
+        DocSafe achieves 100% bit accuracy from printed images as small as 2&times;2&nbsp;cm on face data and
+        3&times;3&nbsp;cm on object data &mdash; state-of-the-art results for print-proof steganography,
+        including when messages are confined to specific regions via spatial masks. It also improves visual
+        quality (ColorHisto 0.05, FID 11.11) while maintaining strong decoding accuracy under a range of digital
+        noise conditions.
+      </p>
+
+      <div class="stat-grid">
+        <div class="stat-card"><span class="num">256 bits</span><span class="label">message capacity embedded per 256&times;256&times;3 image</span></div>
+        <div class="stat-card"><span class="num">100%</span><span class="label">bit accuracy printed at 2&times;2 cm (face) / 3&times;3 cm (object)</span></div>
+        <div class="stat-card"><span class="num">11.11</span><span class="label">FID on object data &mdash; best among all compared methods</span></div>
+        <div class="stat-card"><span class="num">77 MB</span><span class="label">decoder size &mdash; down from 235 MB in StampOne's U-shaped decoder</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="foundations">
+    <div class="container">
+      <h2 class="section-title">Foundations: frequency analysis &amp; covariance loss</h2>
+      <p class="lede">
+        DocSafe's design rests on two controlled analyses run before the final architecture was fixed: which
+        wavelet frequency sub-bands actually help, and which covariance-alignment loss actually stabilizes
+        training.
+      </p>
+
+      <h3 class="sub-title">Which frequencies matter, for what</h3>
+      <p>
+        Following StampOne, every input is decomposed with a gradient operator and a Haar wavelet transform
+        into Low-Low (LL), High-Low (HL), Low-High (LH), and High-High (HH) sub-bands, and a learnable
+        depthwise-convolution layer weighs each sub-band's contribution. Reading off those learned weights
+        after training reveals three different priorities: the <b>original image</b> favors HH and LH (45% and
+        24% of the weight); the <b>message</b> favors the gradient and HL channels (31% and 30%); and the
+        <b>decoder</b>, reconstructing from an encoded image, again favors the gradient and HH (44% and 26%).
+      </p>
+      <figure style="margin-top:16px;">
+        <img src="assets/img/fig3_freqweights.png" alt="Learned depthwise-convolution weights per wavelet sub-band, for the original image, the message, and the decoder input">
+        <figcaption><b>Figure 2.</b> Learned frequency-channel weights for (A) the original image, (B) the message during embedding, and (C) the encoded image during decoding &mdash; each input leans on a different sub-band.</figcaption>
+      </figure>
+      <p>
+        A controlled ablation (six models, each restricted to a different sub-band combination) confirmed that
+        using the full sub-band set (M-ALL) beats every single-band restriction on both perceptual quality and
+        decoding accuracy &mdash; the individual sub-bands are complementary, not redundant.
+      </p>
+
+      <h3 class="sub-title">Which covariance loss stabilizes training</h3>
+      <p>
+        To fight the domain shift between synthetic training noise and real printed/captured distortions,
+        DocSafe aligns the covariance matrices of paired batches (e.g. original vs. encoded images) using a
+        Vision-Transformer-style patch embedding. Four covariance metrics were compared &mdash; Log-Euclidean
+        Distance, the Affine-Invariant Riemannian Metric (AIRM), Jeffrey Divergence, and Stein Divergence.
+      </p>
+      <div class="fig-row" style="margin-top:16px;">
+        <figure>
+          <img src="assets/img/fig4_bitaccuracy.png" alt="Bit accuracy over training steps for five covariance-loss configurations">
+          <figcaption><b>Figure 3.</b> AIRM is the only covariance formulation that trains stably for the decoder; Log-Euclidean and Stein fail to converge (bit accuracy stuck around 0.54).</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/img/fig5_covloss.png" alt="Encoded image and residual examples for four different encoder covariance losses">
+          <figcaption><b>Figure 4.</b> For the encoder, the ranking flips: Stein divergence (M-Stein) gives the best visual fidelity among the four covariance losses tested.</figcaption>
+        </figure>
+      </div>
+      <div class="table-scroll">
+      <table class="results">
+        <thead><tr><th>Encoder covariance loss</th><th>SSIM &uarr;</th><th>LPIPS &darr;</th><th>ColorHisto &darr;</th><th>FID &darr;</th></tr></thead>
+        <tbody>
+          <tr><td>M-AIRM-NoPatches</td><td>0.79</td><td>0.04</td><td>0.05</td><td>30.54</td></tr>
+          <tr><td>M-AIRM</td><td>0.82</td><td>0.03</td><td>0.05</td><td>16.77</td></tr>
+          <tr class="highlight"><td>M-Stein (used in DocSafe)</td><td>0.86</td><td>0.03</td><td>0.04</td><td>14.83</td></tr>
+          <tr><td>M-Jeffrey</td><td>0.80</td><td>0.06</td><td>0.12</td><td>25.30</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p>
+        The upshot &mdash; and a key finding of this work &mdash; is that covariance metrics are task-specific:
+        AIRM is the right choice for aligning the decoder's recovered message, while Stein divergence is the
+        right choice for aligning the encoder's output image.
+      </p>
+    </div>
+  </section>
+
+  <section id="method">
+    <div class="container">
+      <h2 class="section-title">Method</h2>
+      <p>
+        Built on the two analyses above, DocSafe pairs an encoder inherited from StampOne &mdash; extended with
+        a mask-aware Message Embedding Network &mdash; with a fully redesigned, BiSeNet-inspired lightweight
+        decoder.
+      </p>
+
+      <figure style="margin-top:24px;">
+        <img src="assets/img/fig1_architecture.png" alt="DocSafe full architecture: encoder with U-Net and MEN, decoder with low- and high-frequency branches">
+        <figcaption><b>Figure 5.</b> Full architecture. Encoder: gradient/wavelet preprocessing, Message Embedding Network (MEN), U-shape network, and CNN, producing a mask-gated residual. Decoder: a dual-branch design &mdash; a low-frequency Spatial Path and a high-frequency Context Path (ResNet + attention) &mdash; fused before message recovery.</figcaption>
+      </figure>
+
+      <h3 class="sub-title">Message Embedding Networks (MEN)</h3>
+      <p>
+        Unlike StampOne, which spreads the message uniformly across the whole image, DocSafe targets
+        semantically relevant regions via a mask. Three MEN variants trade off domain specificity for
+        generalization: <b>MEN-1</b> (linear projection + Snake activation, depth-map guided) excels on
+        structured domains like faces but doesn't generalize to COCO; <b>MEN-2</b> (learnable embedding +
+        LeakyReLU) and <b>MEN-3</b> (learnable embedding + Snake/GELU) trade a little domain-specific quality
+        for much better robustness on heterogeneous, real-world images.
+      </p>
+      <figure style="margin-top:14px; max-width:640px;">
+        <img src="assets/img/fig2_men.png" alt="Three Message Embedding Network variants: MEN-1 with a linear layer, MEN-2 and MEN-3 with learnable embeddings">
+        <figcaption><b>Figure 6.</b> MEN-1 uses a linear layer; MEN-2 and MEN-3 use a learnable embedding layer (as in NLP models) with different activation functions.</figcaption>
+      </figure>
+
+      <h3 class="sub-title">Decoder: a lightweight dual-branch design</h3>
+      <p>
+        Rather than a conventional U-shaped decoder, DocSafe uses a <b>Spatial Path</b> (three Conv2D + SiLU
+        layers preserving low-frequency spatial detail) fused with a <b>Context Path</b> (a trimmed ResNet-18/34
+        backbone with an Attention Refinement Module capturing high-frequency detail), combined via
+        signal-gated attention. The result matches or beats the original StampOne U-shaped decoder's accuracy
+        at roughly a third of the memory footprint (77&nbsp;MB vs. 235&nbsp;MB).
+      </p>
+
+      <h3 class="sub-title">Discriminators &amp; losses</h3>
+      <p>
+        The <b>encoder discriminator</b> uses two Adam optimizers &mdash; one purely reinforcing real-image
+        recognition, one jointly minimizing the real/encoded discriminator gap &mdash; for more stable
+        adversarial training. The <b>decoder</b> uses a spectral discriminator (FFT + high-pass filter on the
+        original vs. recovered message) inspired by StampOne, encouraging accurate high-frequency reconstruction.
+        Overall, the encoder loss combines Stein divergence, a log-chroma color-histogram loss, LPIPS, and MSE;
+        the decoder loss combines the AIRM covariance loss with binary cross-entropy.
+      </p>
+
+      <h3 class="sub-title">Noise augmentation</h3>
+      <p>
+        Training applies progressive Gaussian noise, JPEG artifacts, grayscale conversion, affine transforms,
+        and cropping between encoder and decoder, so the decoder learns to tolerate the kind of distortion a
+        printed-and-photographed image actually accumulates.
+      </p>
+
+      <h3 class="sub-title">Masked vs. unmasked embedding</h3>
+      <div class="fig-row" style="margin-top:14px;">
+        <figure>
+          <img src="assets/img/fig7_unmasked.jpg" alt="Encoded images without spatial masking, compared across StegaStamp, CodeFace, RiemStega, StampOne, and DocSafe variants">
+          <figcaption><b>Figure 7.</b> Without masking, the message is spread across the whole image. DocSafe M-1 gives the highest visual quality but only generalizes to face data; M-2/M-3 trade some quality for reliable decoding on object data.</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/img/fig8_masked.jpg" alt="Encoded images with spatial masking, embedding the message only within the masked object or face region">
+          <figcaption><b>Figure 8.</b> With a spatial mask applied, the message is confined to the masked region only (e.g. a bottle label or a face) &mdash; the rest of the image is left untouched.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="results">
+    <div class="container">
+      <h2 class="section-title">Results</h2>
+      <p>
+        DocSafe is compared against CodeFace, StegaStamp, RiemStega, StampOne, and RoSteALS. StampOne's
+        Attention-VNet variant is the primary baseline; all methods embed 256 bits (DocSafe, StampOne) or 100
+        bits (CodeFace, StegaStamp, RiemStega) per 256&times;256&times;3 (or 400&times;400&times;3) image.
+      </p>
+
+      <h3 class="sub-title">Encoded image quality &mdash; face data (2,000 FFHQ images)</h3>
+      <div class="table-scroll">
+      <table class="results">
+        <thead>
+          <tr><th rowspan="2">Method</th><th colspan="5">(A) no mask</th><th colspan="5">(B) with mask</th></tr>
+          <tr><th>PSNR&uarr;</th><th>SSIM&uarr;</th><th>LPIPS&darr;</th><th>ColorHisto&darr;</th><th>FID&darr;</th>
+              <th>PSNR&uarr;</th><th>SSIM&uarr;</th><th>LPIPS&darr;</th><th>ColorHisto&darr;</th><th>FID&darr;</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>StegaStamp</td><td>27.82</td><td>0.69</td><td>0.18</td><td>0.43</td><td>36.92</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+          <tr><td>Code Face</td><td>32.31</td><td>0.93</td><td>0.30</td><td>0.08</td><td>20.70</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+          <tr><td>RiemStega</td><td>32.01</td><td>0.90</td><td>0.02</td><td>0.06</td><td>21.66</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+          <tr><td>StampOne</td><td>28.61</td><td>0.81</td><td>0.30</td><td>0.10</td><td>33.63</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+          <tr class="highlight"><td>DocSafe (M-1)</td><td>31.01</td><td>0.85</td><td>0.03</td><td>0.05</td><td>16.77</td><td>31.17</td><td>0.90</td><td>0.03</td><td>0.05</td><td>16.77</td></tr>
+          <tr><td>DocSafe (M-2)</td><td>27.39</td><td>0.80</td><td>0.06</td><td>0.05</td><td>35.75</td><td>28.42</td><td>0.82</td><td>0.06</td><td>0.05</td><td>35.72</td></tr>
+          <tr><td>DocSafe (M-3)</td><td>29.06</td><td>0.86</td><td>0.09</td><td>0.08</td><td>22.02</td><td>30.68</td><td>0.88</td><td>0.04</td><td>0.04</td><td>22.0</td></tr>
+          <tr><td>RoSteALS</td><td>32.81</td><td>0.95</td><td>0.04</td><td>0.09</td><td>13.49</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <h3 class="sub-title">Encoded image quality &mdash; object data (4,000 COCO images)</h3>
+      <div class="table-scroll">
+      <table class="results">
+        <thead>
+          <tr><th rowspan="2">Method</th><th colspan="5">(A) no mask</th><th colspan="5">(B) with mask</th></tr>
+          <tr><th>PSNR&uarr;</th><th>SSIM&uarr;</th><th>LPIPS&darr;</th><th>ColorHisto&darr;</th><th>FID&darr;</th>
+              <th>PSNR&uarr;</th><th>SSIM&uarr;</th><th>LPIPS&darr;</th><th>ColorHisto&darr;</th><th>FID&darr;</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>StegaStamp</td><td>22.36</td><td>0.66</td><td>0.20</td><td>0.28</td><td>15.07</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+          <tr><td>Code Face</td><td>25.37</td><td>0.90</td><td>0.30</td><td>0.08</td><td>16.7</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+          <tr><td>RiemStega</td><td>24.61</td><td>0.89</td><td>0.04</td><td>0.07</td><td>8.66</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+          <tr><td>StampOne</td><td>24.36</td><td>0.81</td><td>0.33</td><td>0.10</td><td>16.23</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+          <tr class="highlight"><td>DocSafe (M-1)</td><td>23.83</td><td>0.80</td><td>0.10</td><td>0.12</td><td>4.11</td><td>24.21</td><td>0.81</td><td>0.10</td><td>0.08</td><td>4.10</td></tr>
+          <tr><td>DocSafe (M-2)</td><td>24.12</td><td>0.79</td><td>0.04</td><td>0.05</td><td>13.24</td><td>24.32</td><td>0.81</td><td>0.03</td><td>0.05</td><td>13.23</td></tr>
+          <tr><td>DocSafe (M-3)</td><td>24.37</td><td>0.84</td><td>0.13</td><td>0.08</td><td>7.17</td><td>24.64</td><td>0.85</td><td>0.12</td><td>0.06</td><td>7.15</td></tr>
+          <tr><td>RoSteALS</td><td>25.12</td><td>0.90</td><td>0.04</td><td>0.09</td><td>20.28</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p style="font-size:0.86rem;color:var(--text-muted);">RoSteALS scores well on digital perceptual metrics but &mdash; as shown below &mdash; cannot decode anything once printed.</p>
+
+      <h3 class="sub-title">Print-proof decoding &mdash; String Accuracy (%), face data (40 printed FFHQ images)</h3>
+      <div class="table-scroll">
+      <table class="results">
+        <thead>
+          <tr><th rowspan="2">Method</th><th colspan="4">(A) no mask</th><th colspan="4">(B) with mask</th></tr>
+          <tr><th>5&times;5cm</th><th>4&times;4cm</th><th>3&times;3cm</th><th>2&times;2cm</th><th>5&times;5cm</th><th>4&times;4cm</th><th>3&times;3cm</th><th>2&times;2cm</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>StegaStamp</td><td>72</td><td>70</td><td>65</td><td>48</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+          <tr><td>Code Face</td><td>55</td><td>50</td><td>38</td><td>15</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+          <tr><td>RiemStega</td><td>100</td><td>100</td><td>85</td><td>25</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+          <tr><td>StampOne</td><td>100</td><td>100</td><td>95</td><td>62</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+          <tr class="highlight"><td>DocSafe (M-1)</td><td>100</td><td>100</td><td>100</td><td>100</td><td>100</td><td>100</td><td>100</td><td>100</td></tr>
+          <tr><td>DocSafe (M-2)</td><td>100</td><td>100</td><td>100</td><td>83</td><td>100</td><td>100</td><td>100</td><td>64</td></tr>
+          <tr><td>DocSafe (M-3)</td><td>100</td><td>100</td><td>55</td><td>45</td><td>100</td><td>100</td><td>75</td><td>45</td></tr>
+          <tr><td>RoSteALS</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p>
+        DocSafe M-1 is the first method in this comparison to hold <b>100% string accuracy down to a
+        2&times;2&nbsp;cm printed portrait</b> &mdash; with or without masking &mdash; comfortably ahead of
+        StampOne (62% at 2&times;2cm) and RiemStega (25%).
+      </p>
+
+      <h3 class="sub-title">Print-proof decoding &mdash; String Accuracy (%), object data (40 printed COCO images)</h3>
+      <div class="table-scroll">
+      <table class="results">
+        <thead>
+          <tr><th rowspan="2">Method</th><th colspan="4">(A) no mask</th><th colspan="4">(B) with mask</th></tr>
+          <tr><th>5&times;5cm</th><th>4&times;4cm</th><th>3&times;3cm</th><th>2&times;2cm</th><th>5&times;5cm</th><th>4&times;4cm</th><th>3&times;3cm</th><th>2&times;2cm</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>StegaStamp</td><td>82</td><td>82</td><td>82</td><td>72</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+          <tr><td>RiemStega</td><td>100</td><td>100</td><td>85</td><td>22</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+          <tr><td>StampOne</td><td>100</td><td>100</td><td>95</td><td>62</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+          <tr><td>DocSafe (M-1)</td><td>60</td><td>25</td><td>25</td><td>0</td><td>22</td><td>0</td><td>0</td><td>0</td></tr>
+          <tr class="highlight"><td>DocSafe (M-2)</td><td>100</td><td>100</td><td>100</td><td>85</td><td>100</td><td>100</td><td>85</td><td>68</td></tr>
+          <tr><td>DocSafe (M-3)</td><td>100</td><td>100</td><td>87</td><td>60</td><td>100</td><td>100</td><td>72</td><td>45</td></tr>
+          <tr><td>RoSteALS</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p>
+        On the harder, heterogeneous COCO object set, the face-specialized M-1 struggles &mdash; exactly why
+        M-2/M-3 exist. DocSafe M-2 reaches 100% at 3&times;3cm and 85% at 2&times;2cm, a 5&ndash;23 point
+        improvement over StampOne at the same sizes. CodeFace and prior full-image methods can't be evaluated
+        under masking at all: they have no mechanism to confine embedding to a region.
+      </p>
+
+      <h3 class="sub-title">Digital robustness (2,000 FFHQ images)</h3>
+      <div class="table-scroll">
+      <table class="results">
+        <thead>
+          <tr><th rowspan="2">Method</th><th colspan="3">JPEG (%)</th><th colspan="3">Gaussian (std)</th><th colspan="3">Resolution (px)</th></tr>
+          <tr><th>70</th><th>60</th><th>50</th><th>0.08</th><th>0.06</th><th>0.04</th><th>60&sup2;</th><th>80&sup2;</th><th>100&sup2;</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>StegaStamp</td><td>100</td><td>100</td><td>100</td><td>100</td><td>100</td><td>100</td><td>55</td><td>80</td><td>91</td></tr>
+          <tr><td>Code Face</td><td>80</td><td>84</td><td>88</td><td>55</td><td>75</td><td>86</td><td>2</td><td>11</td><td>36</td></tr>
+          <tr><td>RoSteALS</td><td>87</td><td>90</td><td>94</td><td>23</td><td>35</td><td>53</td><td>81</td><td>97</td><td>98</td></tr>
+          <tr><td>RiemStega</td><td>99</td><td>100</td><td>100</td><td>98</td><td>99</td><td>100</td><td>55</td><td>99</td><td>100</td></tr>
+          <tr><td>StampOne</td><td>100</td><td>100</td><td>100</td><td>98</td><td>100</td><td>100</td><td>84</td><td>98</td><td>100</td></tr>
+          <tr class="highlight"><td>DocSafe (M-1)</td><td>80</td><td>85</td><td>100</td><td>98</td><td>100</td><td>100</td><td>85</td><td>100</td><td>100</td></tr>
+          <tr><td>DocSafe (M-2)</td><td>82</td><td>87</td><td>100</td><td>98</td><td>98</td><td>100</td><td>80</td><td>98</td><td>100</td></tr>
+          <tr><td>DocSafe (M-3)</td><td>82</td><td>87</td><td>100</td><td>90</td><td>97</td><td>100</td><td>80</td><td>98</td><td>100</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p style="font-size:0.86rem;color:var(--text-muted);">DocSafe leads at low resolution and matches the field on Gaussian noise and mild JPEG, but trails StampOne/RiemStega under heavier JPEG compression (70&ndash;60% quality) &mdash; a known trade-off, not yet closed.</p>
+    </div>
+  </section>
+
+  <section id="code">
+    <div class="container">
+      <h2 class="section-title">Code</h2>
+      <p>
+        DocSafe is published as the <code>DocSafe</code> Python package with a documented encoder/decoder
+        entry point.
+      </p>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><code>pip install DocSafe</code></pre>
+      </div>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><code>from DocSafe import encoder, decoder
+
+encoder_router = encoder(model="M1", path_model="pre_trained_models/", secret_size=100)
+encoder_router.load_network(device="cpu")
+
+images = encoder_router.read_image(path=["test_images/original_images.jpg"])
+image_batch = encoder_router.preprocess_images(images)
+encoded = encoder_router(original_images=image_batch, messages="viste", mask=None)
+encoder_router.save_encoded_image("encoded.png")
+
+decoder_router = decoder(model="M1", path_model="pre_trained_models/", secret_size=100)
+decoder_router.load_network(device="cpu")
+
+encoded_images = decoder_router.read_image(path=["encoded.png"])
+encoded_batch = decoder_router.preprocess_images(encoded_images)
+messages = decoder_router(encoded_images=encoded_batch, mask=None)
+print(messages)</code></pre>
+      </div>
+      <p>
+        Full source and setup instructions are on
+        <a href="https://github.com/farhadsh1992/DocSafe">GitHub &rarr; farhadsh1992/DocSafe</a>. Pretrained
+        weights are not bundled in the package (~600&nbsp;MB, past PyPI's practical limits) &mdash; they're
+        available on request: <a href="mailto:farhad.shadmand@isr.uc.pt">farhad.shadmand@isr.uc.pt</a>.
+      </p>
+    </div>
+  </section>
+
+  <section id="bibtex">
+    <div class="container">
+      <h2 class="section-title">BibTeX</h2>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><code>@article{shadmand2026docsafe,
+  title     = {DocSafe: Toward Practical Print-Proof Image Steganography via Frequency
+               Decomposition and Covariance Alignment},
+  author    = {Shadmand, Farhad and Medvedev, Iurii and Schirmer, Luiz and Gon\c{c}alves, Nuno},
+  journal   = {IEEE Access},
+  volume    = {14},
+  pages     = {54213--54228},
+  year      = {2026},
+  publisher = {IEEE},
+  doi       = {10.1109/ACCESS.2026.3680290}
+}</code></pre>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <p>This work is licensed under a Creative Commons Attribution 4.0 License (CC BY 4.0).</p>
+    <p>Supported by FCT &ndash; Funda&ccedil;&atilde;o para a Ci&ecirc;ncia e a Tecnologia under
+       UIDB/00048/2020, CertifyMeAP (2024.07457.IACDC), and BlockDFake (2024.07681.IACDC).</p>
+    <p>&copy; 2026 Farhad Shadmand and co-authors. Published in IEEE Access, Vol. 14.</p>
+  </div>
+</footer>
+
+<script>
+  function copyCode(btn) {
+    const pre = btn.nextElementSibling;
+    navigator.clipboard.writeText(pre.innerText).then(() => {
+      const original = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    });
+  }
+
+  function effectiveTheme() {
+    return document.documentElement.getAttribute('data-theme')
+      || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  }
+  function updateToggleIcon() {
+    const btn = document.getElementById('theme-toggle');
+    if (btn) btn.innerHTML = effectiveTheme() === 'dark' ? '&#9728;&#65039;' : '&#127769;';
+  }
+  function toggleTheme() {
+    const next = effectiveTheme() === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('docsafe-theme', next);
+    updateToggleIcon();
+  }
+  (function () {
+    var saved = localStorage.getItem('docsafe-theme');
+    if (saved === 'light' || saved === 'dark') document.documentElement.setAttribute('data-theme', saved);
+  })();
+  updateToggleIcon();
+
+  const navLinks = Array.from(document.querySelectorAll('nav.pagenav a[href^="#"]'));
+  const linkBySection = {};
+  navLinks.forEach(link => { linkBySection[link.getAttribute('href').slice(1)] = link; });
+  const sectionObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const link = linkBySection[entry.target.id];
+      if (!link) return;
+      navLinks.forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+    });
+  }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
+  document.querySelectorAll('main section[id]').forEach(section => sectionObserver.observe(section));
+</script>
+
+</body>
+</html>

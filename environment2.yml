@@ -1,0 +1,71 @@
+name: StylePuncher2_vTroch
+python_version: "3.9"
+channels:
+  - pytorch
+  - nvidia
+system_packages:
+    - "libgl1-mesa-glx"
+    - "libglib2.0-0"
+    - "ninja-build"
+dependencies:
+  - cudatoolkit
+  - python >= 3.8
+  - pip
+  - numpy >=1.25
+  - scipy
+  - pytorch>=2.0.1
+  - torchvision>=0.15.2
+  - requests=2.26.0
+  - ninja>=1.10.2
+  - matplotlib=3.4.2
+  - imageio=2.9.0
+  - pendulum
+  - psutil
+  - tensorboard
+  - tensorflow 
+  - imgaug
+  - pip:
+    - opencv-python
+    - pillow==7.1.2
+    - kornia
+    - torcheval
+    - pandas
+    - opencv-python
+    #- torch_mimicry
+prefix: ~/anaconda3/envs/StamOne_vt89_2
+
+
+
+
+
+
+############################################################    
+## they way produce new enviroment with Code and yml file:
+## conda env create -f environment.yml
+## conda activate StamOne_vt89
+## python train_steps.py
+############################################################
+############################################################
+## dependencies lib are installed by coda
+## and other under the pip, are installed by pip.
+############################################################
+## conda install cudatoolkit 
+############################################################
+## tensorboard --logdir="./results/logs/" --port=6008
+############################################################
+## conda remove --name ENV_NAME --all
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

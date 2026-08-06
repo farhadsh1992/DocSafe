@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "DocSafe"
+version = "0.1.0"
+description = "DocFace: deep-learning-based document/image watermark encoder-decoder with a full training pipeline"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "farhadsh1992", email = "farhadsh1992@gmail.com" }]
+requires-python = ">=3.9,<3.13"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
+
+dependencies = [
+    "numpy>=1.25",
+    "scipy",
+    "pandas",
+    "matplotlib",
+    "torch>=2.0.1",
+    "torchvision>=0.15.2",
+    "tensorflow==2.18",
+    "keras==3.5",
+    "kornia",
+    "torcheval",
+    "torchgeometry",
+    "opencv-python",
+    "pillow",
+    "PyWavelets",
+    "scikit-image",
+    "scikit-learn",
+    "bchlib",
+    "reedsolo",
+    "requests",
+    "pendulum",
+    "psutil",
+    "beautifulsoup4",
+    "dominate",
+    "seaborn",
+    "packaging",
+    "setuptools",
+]
+
+[project.optional-dependencies]
+# Only needed to import DocSafe.loss_functions_lib.models.stylegan2 (and everything that
+# depends on it: hyperstyle, psp, e4e, restyle_e4e_encoders, w_encoder, hypernetworks).
+# Those modules JIT-compile CUDA/C++ extensions on import via torch.utils.cpp_extension.load()
+# and require an actual CUDA GPU + nvcc toolchain - they will not import on CPU-only machines
+# (including macOS) even with ninja installed.
+stylegan2 = ["ninja"]
+# Only needed to call DocSafe.networks.DETR_NET.segmentation's panoptic-segmentation helpers.
+detr-extras = ["panopticapi"]
+
+[project.urls]
+Repository = "https://github.com/farhadsh1992/DocSafe"
+
+[tool.setuptools.packages.find]
+include = ["DocSafe*", "FarhadCV*", "Network_Libs*", "Tools_GAN*", "Tools_nvidia_torch*", "configs*"]
+exclude = ["*.ipynb_checkpoints*", "*__pycache__*"]
+
+[tool.setuptools.package-data]
+"DocSafe.loss_functions_lib.models.mtcnn.mtcnn_pytorch.src.weights" = ["*.npy"]
+"DocSafe.loss_functions_lib.models.stylegan2.op" = ["*.cpp", "*.cu"]
