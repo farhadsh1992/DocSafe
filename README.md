@@ -4,7 +4,9 @@
   <img src="assets/DocSafe_log.png" alt="DocSafe logo" width="160">
 </p>
 
-[🌐 Project Website](https://farhadsh1992.github.io/DocSafe/)
+[🌐 Project Website](https://farhadsh1992.github.io/DocSafe/) &middot;
+[📄 Paper (IEEE Xplore)](https://ieeexplore.ieee.org/document/11471765) &middot;
+[📦 PyPI](https://pypi.org/project/DocSafe/)
 
 Deep-learning-based watermark encoder/decoder for images and documents, with a full
 training pipeline (M1/M2/M3 model variants).
