@@ -1,4 +1,4 @@
-# DocSafe (DocFace)
+# DocSafe: Toward Practical Print-Proof Image Steganography via Frequency Decomposition and Covariance Alignment 
 
 <p align="center">
   <img src="assets/DocSafe_log.png" alt="DocSafe logo" width="160">
