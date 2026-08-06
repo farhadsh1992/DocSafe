@@ -1,7 +1,22 @@
 # DocSafe (DocFace)
 
+<p align="center">
+  <img src="assets/DocSafe_log.png" alt="DocSafe logo" width="160">
+</p>
+
+[🌐 Project Website](https://farhadsh1992.github.io/DocSafe/)
+
 Deep-learning-based watermark encoder/decoder for images and documents, with a full
 training pipeline (M1/M2/M3 model variants).
+
+![DocSafe architecture](docs/assets/img/fig1_architecture.png)
+*Figure 1. The full architecture of DocSafe consists of an encoder and a decoder. A
+dedicated preprocessing module transforms the original image into gradient maps and
+wavelet sub-band representations, while the message is processed through the Message
+Embedding Network (MEN). The fused features pass through the U-Net and convolutional
+layers of the encoder to produce a residual image, which is added to the original
+image to form the encoded image. Before decoding, distortions are simulated and a
+preprocessing stage enhances high-frequency components to recover the message.*
 
 ## Install
 
