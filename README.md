@@ -11,14 +11,12 @@
 Deep-learning-based watermark encoder/decoder for images and documents, with a full
 training pipeline (M1/M2/M3 model variants).
 
-![DocSafe architecture](docs/assets/img/fig1_architecture.png)
-*Figure 1. The full architecture of DocSafe consists of an encoder and a decoder. A
-dedicated preprocessing module transforms the original image into gradient maps and
-wavelet sub-band representations, while the message is processed through the Message
-Embedding Network (MEN). The fused features pass through the U-Net and convolutional
-layers of the encoder to produce a residual image, which is added to the original
-image to form the encoded image. Before decoding, distortions are simulated and a
-preprocessing stage enhances high-frequency components to recover the message.*
+![DocSafe encoded image samples](docs/assets/img/fig7_unmasked.jpg)
+*Figure 7. Representative samples of encoded images without spatial masking, where the
+message is uniformly embedded across the entire image. Model M-1 produces high-quality
+encoded images, but its decoder performs well only on the face image dataset. Models
+M-2 and M-3 generate encoded images with lower visual quality than M-1, but demonstrate
+improved and acceptable decoder performance on the object image dataset.*
 
 ## Install
 
